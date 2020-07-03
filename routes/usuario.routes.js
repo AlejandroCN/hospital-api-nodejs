@@ -1,33 +1,80 @@
+// Dependencias de terceros
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const Op = require('sequelize').Op;
 
-const Usuario = require('../models/usuario.model');
-// este es el middleware encargado de revisar si el token de autorizacion es correcto
+// Middlewares
 const autenticacion = require('../middlewares/autenticacion');
+
+// Modelos
+const Usuario = require('../models/usuario.model');
 
 const app = express();
 
 // ======================================================
 // OBTENER TODOS LOS USUARIOS
 // ======================================================
-app.get('/', (req, res, next) => {
-  Usuario.findAll().then((users) => {
-    if (users.length == 0) {
+app.post('/findAllPagesFilteredByAny', (req, res, next) => {
+  const pageParams = req.body;
+
+  Usuario.findAndCountAll({
+    attributes: ['id', 'nombre', 'email', 'img', 'role'],
+    where: {
+      [Op.or]: [
+        {
+          nombre: { [Op.like]: `%${pageParams.termino}%` }
+        },
+        {
+          email: { [Op.like]: `%${pageParams.termino}%` }
+        }
+      ]
+    },
+    order: [[pageParams.atributo, pageParams.direccion]],
+    limit: pageParams.tamPagina,
+    offset: pageParams.pagina * pageParams.tamPagina
+  }).then(resp => {
+    const totalRegistros = resp.count;
+    const usuarios = resp.rows.map((u) => u.dataValues);
+
+    if (usuarios.length == 0) {
       res.status(404).json({
-        ok: true,
-        mensaje: 'No existe ningún usuario registrado en la base de datos!'
+        ok: false,
+        mensaje: 'No existe ningún usuario registrado en la página solicitada'
       });
     } else {
+      let totalPaginas = totalRegistros / pageParams.tamPagina;
+      if (totalPaginas % 1 != 0) {
+        totalPaginas = Math.floor(totalPaginas) + 1;
+      }
+
+      let isFirstPage = false;
+      if (pageParams.pagina == 0) {
+        isFirstPage = true;
+      }
+
+      let isLastPage = false;
+      if ((totalPaginas - 1) == pageParams.pagina) {
+        isLastPage = true;
+      }
+
       res.status(200).json({
         ok: true,
-        mensaje: 'Usuarios recuperados',
-        usuarios: users
+        mensaje: 'Usuarios recuperados correctamente',
+        usuarios,
+        pagina: pageParams.pagina,
+        tamPagina: pageParams.tamPagina,
+        direccion: pageParams.direccion,
+        atributo: pageParams.atributo,
+        totalPaginas,
+        isFirstPage,
+        isLastPage
       });
     }
   }).catch((err) => {
     res.status(500).json({
       ok: false,
-      mensaje: 'Internal Server Error'
+      mensaje: 'Internal Server Error',
+      error: err
     });
   });
 });

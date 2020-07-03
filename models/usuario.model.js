@@ -1,8 +1,9 @@
 const { Model, DataTypes, Sequelize } = require('sequelize');
+const { database, user, password, host, dialect } = require('../config/config');
 
-const conexion = new Sequelize('hospital', 'root', 'Pkmn05Blue', {
-  host: 'localhost',
-  dialect: 'mysql'
+const conexion = new Sequelize(database, user, password, {
+  host: host,
+  dialect: dialect
 });
 
 class Usuario extends Model {}
@@ -71,7 +72,7 @@ Usuario.init({
   }
 }, {
   sequelize: conexion,
-  modelName: 'User',
+  modelName: 'usuario',
   tableName: 'usuarios',
   timestamps: false
 });

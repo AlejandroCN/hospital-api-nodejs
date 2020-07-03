@@ -5,8 +5,11 @@ const bodyParser = require('body-parser');
 const { database, user, password, host, dialect } = require('./config/config');
 
 // Importaciones de archivos de rutas
-const usuarioRoutes = require('./routes/usuario.routes');
 const loginRoutes = require('./routes/login.routes');
+const usuarioRoutes = require('./routes/usuario.routes');
+const hospitalRoutes = require('./routes/hospital.routes');
+const medicoRoutes = require('./routes/medico.routes');
+const uploadRoutes = require('./routes/uploads.routes');
 
 // inicializaciones
 const app = express();
@@ -27,8 +30,11 @@ conexion.authenticate().then(msg => {
 });
 
 // Rutas
-app.use('/usuarios', usuarioRoutes);
 app.use('/login', loginRoutes);
+app.use('/usuarios', usuarioRoutes);
+app.use('/hospitales', hospitalRoutes);
+app.use('/medicos', medicoRoutes);
+app.use('/uploads', uploadRoutes);
 
 // escuchar peticiones
 app.listen(3000, () => {
