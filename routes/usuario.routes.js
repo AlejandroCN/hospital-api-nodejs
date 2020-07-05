@@ -82,33 +82,48 @@ app.post('/findAllPagesFilteredByAny', (req, res, next) => {
 // ======================================================
 // CREAR NUEVO USUARIO (autenticacion.verificaToken es el middleware)
 // ======================================================
-app.post('/', autenticacion.verificaToken, (req, res) => {
+app.post('/', (req, res) => {
   // obtenemos el RequestBody con ayuda del middleware BoddyParser
-  const usuario = req.body;
-  usuario.password = bcrypt.hashSync(usuario.password, 10);
+  const body = req.body;
+  const usuario = Usuario.build({
+    nombre: body.nombre,
+    email: body.email,
+    password: body.password,
+    img: body.img,
+    role: body.role
+  });
 
-  Usuario.create(usuario).then((usuarioCreado) => {
-    usuarioCreado.password = '';
-    res.status(201).json({
-      ok: true,
-      mensaje: 'Usuario Creado satisfactoriamente',
-      usuarioCreado
+  usuario.validate().then(() => {
+    usuario.password = bcrypt.hashSync(usuario.password, 10);
+    Usuario.create(usuario.dataValues).then((usuarioCreado) => {
+      usuarioCreado.password = '';
+      res.status(201).json({
+        ok: true,
+        mensaje: 'Usuario Creado satisfactoriamente',
+        usuario: usuarioCreado
+      });
+    }).catch((err) => {
+      // si el error es por las validaciones contestamos con un 400 (BAD_REQUEST)
+      if (err.name == 'SequelizeValidationError') {
+        res.status(400).json({
+          ok: false,
+          mensaje: 'Error en las validaciones',
+          error: err
+        });
+      } else {
+        res.status(500).json({
+          ok: false,
+          mensaje: 'Internal Server Error',
+          error: err
+        });
+      }
     });
-  }).catch((err) => {
-    // si el error es por las validaciones contestamos con un 400 (BAD_REQUEST)
-    if (err.name == 'SequelizeValidationError') {
-      res.status(400).json({
-        ok: false,
-        mensaje: 'Error en las validaciones',
-        error: err
-      });
-    } else {
-      res.status(500).json({
-        ok: false,
-        mensaje: 'Internal Server Error',
-        error: err
-      });
-    }
+  }).catch(err => {
+    return res.status(400).json({
+      ok: false,
+      mensaje: 'Error en validaciones!',
+      error: err
+    });
   });
 });
 

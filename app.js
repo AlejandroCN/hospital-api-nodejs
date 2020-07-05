@@ -1,5 +1,6 @@
 // importaciones
 const express = require('express');
+const cors = require('cors');
 const Sequelize = require('sequelize');
 const bodyParser = require('body-parser');
 const { database, user, password, host, dialect } = require('./config/config');
@@ -14,9 +15,16 @@ const uploadRoutes = require('./routes/uploads.routes');
 // inicializaciones
 const app = express();
 
-// Configuracion del Body Parser
+// Configuracion del Body Parse
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+// Configuracion de los cors
+const corsOptions = {
+  origin: 'http://localhost:4200',
+  optionsSuccessStatus: 200
+}
+app.use(cors(corsOptions));
 
 // Conexion Base de Datos
 const conexion = new Sequelize(database, user, password, {
